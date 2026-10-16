@@ -1,0 +1,334 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Comfortable teal primary (kept as --admin-red* for existing references) */
+    --admin-red: #0d9488;
+    --admin-red-hover: #0f766e;
+    --admin-red-muted: rgba(13, 148, 136, 0.12);
+    --admin-red-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+
+    /* Admin shell / surfaces */
+    --admin-page-bg: #f4f7f7;
+    --admin-chrome-bg: #ffffff;
+    --admin-chrome-border: #e2e8e8;
+    --admin-chrome-text: #152022;
+    --admin-chrome-text-muted: #3d4f52;
+    --admin-surface: #ffffff;
+    --admin-surface-muted: #f2f6f6;
+    --admin-row-hover: #f7fafb;
+    --admin-table-head: color-mix(in srgb, var(--admin-red) 8%, white);
+    --admin-footer-bg: #f7fafa;
+    --admin-shadow: 0 1px 3px rgba(16, 32, 36, 0.04);
+
+    /* shadcn/ui design tokens (soft teal primary) */
+    --background: 0 0% 100%;
+    --foreground: 190 18% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 190 18% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 190 18% 12%;
+    --primary: 173 80% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 180 16% 96%;
+    --secondary-foreground: 190 18% 12%;
+    --muted: 180 16% 96%;
+    --muted-foreground: 190 10% 32%;
+    --accent: 173 45% 95%;
+    --accent-foreground: 173 70% 24%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 180 12% 84%;
+    --input: 180 12% 84%;
+    --ring: 173 80% 32%;
+    --radius: 0.6rem;
+}
+
+.dark {
+    --admin-red-muted: rgba(45, 212, 191, 0.18);
+    --admin-page-bg: #0e1213;
+    --admin-chrome-bg: #141a1b;
+    --admin-chrome-border: #273234;
+    --admin-chrome-text: #eef4f4;
+    --admin-chrome-text-muted: #c5d0d2;
+    --admin-surface: #181f20;
+    --admin-surface-muted: #212a2c;
+    --admin-row-hover: #243033;
+    --admin-table-head: color-mix(in srgb, var(--admin-red) 18%, #181f20);
+    --admin-footer-bg: #121718;
+    --admin-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+
+    --background: 190 16% 9%;
+    --foreground: 180 18% 96%;
+    --card: 190 14% 12%;
+    --card-foreground: 180 18% 96%;
+    --popover: 190 14% 12%;
+    --popover-foreground: 180 18% 96%;
+    --primary: 173 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 190 12% 16%;
+    --secondary-foreground: 180 18% 96%;
+    --muted: 190 12% 16%;
+    --muted-foreground: 180 12% 78%;
+    --accent: 173 28% 16%;
+    --accent-foreground: 173 70% 72%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 190 12% 22%;
+    --input: 190 12% 22%;
+    --ring: 173 65% 42%;
+}
+
+body {
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+}
+
+.noto-color-emoji-regular {
+    font-family: "Noto Color Emoji", sans-serif !important;
+}
+
+/* Search Input Styling */
+.search-input {
+    border-color: #c5d0e0 !important;
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.search-input:hover {
+    border-color: var(--admin-red) !important;
+}
+
+.search-input:focus,
+.search-input:focus-visible {
+    border-color: var(--admin-red) !important;
+    box-shadow: 0 0 0 2px var(--admin-red-muted) !important;
+    outline: none !important;
+}
+
+/* Admin dashboard stat cards */
+.admin-dashboard-stat-card {
+    transition:
+        box-shadow 0.25s ease,
+        transform 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.admin-dashboard-stat-link:hover .admin-dashboard-stat-card {
+    box-shadow: 0 12px 36px rgba(13, 148, 136, 0.16);
+    transform: translateY(-3px);
+}
+
+.admin-dashboard-stat-link:focus-visible {
+    outline: 2px solid var(--admin-red);
+    outline-offset: 3px;
+    border-radius: 16px;
+}
+
+/* Light shell scrollbars: soft track, theme-colored thumb */
+.theme-scroll,
+.theme-scroll .overflow-auto,
+.theme-scroll .overflow-y-auto,
+.theme-scroll .overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--admin-red) 45%, transparent) transparent;
+}
+
+.theme-scroll::-webkit-scrollbar,
+.theme-scroll .overflow-auto::-webkit-scrollbar,
+.theme-scroll .overflow-y-auto::-webkit-scrollbar,
+.theme-scroll .overflow-x-auto::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.theme-scroll::-webkit-scrollbar-track,
+.theme-scroll .overflow-auto::-webkit-scrollbar-track,
+.theme-scroll .overflow-y-auto::-webkit-scrollbar-track,
+.theme-scroll .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+}
+
+.theme-scroll::-webkit-scrollbar-thumb,
+.theme-scroll .overflow-auto::-webkit-scrollbar-thumb,
+.theme-scroll .overflow-y-auto::-webkit-scrollbar-thumb,
+.theme-scroll .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--admin-red) 45%, transparent);
+    border: 2px solid transparent;
+    border-radius: 999px;
+}
+
+.theme-scroll::-webkit-scrollbar-thumb:hover,
+.theme-scroll .overflow-auto::-webkit-scrollbar-thumb:hover,
+.theme-scroll .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.theme-scroll .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--admin-red) 70%, transparent);
+}
+
+/* Native date controls draw a square UA box. Keep them inside the pill filters. */
+.admin-date-filter {
+    height: 2.75rem;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    border-radius: 9999px;
+    background-color: var(--admin-surface-muted);
+    padding: 0 0.85rem 0 3.35rem;
+    font-size: 0.875rem;
+    line-height: 1;
+    color: var(--admin-chrome-text);
+    outline: none;
+    box-shadow: none;
+    color-scheme: inherit;
+}
+
+.admin-date-filter:focus,
+.admin-date-filter:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.4);
+}
+
+.admin-date-filter::-webkit-datetime-edit,
+.admin-date-filter::-webkit-datetime-edit-fields-wrapper,
+.admin-date-filter::-webkit-datetime-edit-text,
+.admin-date-filter::-webkit-datetime-edit-month-field,
+.admin-date-filter::-webkit-datetime-edit-day-field,
+.admin-date-filter::-webkit-datetime-edit-year-field {
+    padding: 0;
+    background: transparent;
+    color: var(--admin-chrome-text);
+}
+
+.admin-date-filter::-webkit-datetime-edit-month-field:focus,
+.admin-date-filter::-webkit-datetime-edit-day-field:focus,
+.admin-date-filter::-webkit-datetime-edit-year-field:focus {
+    background-color: rgba(13, 148, 136, 0.12);
+    color: #0d9488;
+    border-radius: 9999px;
+    outline: none;
+}
+
+.admin-date-filter::-webkit-calendar-picker-indicator {
+    margin: 0;
+    padding: 0.2rem;
+    border-radius: 9999px;
+    background-color: transparent;
+    cursor: pointer;
+    opacity: 0.65;
+}
+
+.admin-date-filter::-webkit-calendar-picker-indicator:hover {
+    background-color: rgba(13, 148, 136, 0.12);
+    opacity: 1;
+}
+
+/* Inertia NProgress — track website theme primary (--admin-red) */
+#nprogress .bar {
+    background: var(--admin-red) !important;
+    height: 3px;
+}
+
+#nprogress .peg {
+    box-shadow:
+        0 0 10px var(--admin-red),
+        0 0 5px var(--admin-red) !important;
+}
+
+#nprogress .spinner-icon {
+    border-top-color: var(--admin-red) !important;
+    border-left-color: var(--admin-red) !important;
+}
+
+/* Theme-aware admin helpers used across list pages / drawers */
+.admin-surface {
+    background-color: var(--admin-surface);
+    color: var(--admin-chrome-text);
+}
+
+.admin-surface-muted {
+    background-color: var(--admin-surface-muted);
+}
+
+.admin-border {
+    border-color: var(--admin-chrome-border);
+}
+
+.admin-text {
+    color: var(--admin-chrome-text);
+}
+
+.admin-text-muted {
+    color: var(--admin-chrome-text-muted);
+}
+
+.admin-row-hover:hover {
+    background-color: var(--admin-row-hover) !important;
+}
+
+.admin-input-addon {
+    background-color: var(--admin-surface-muted);
+    border-color: hsl(var(--input));
+    color: var(--admin-chrome-text-muted);
+}
+
+.dark .admin-dashboard-stat-card {
+    background-color: var(--admin-surface);
+    border-color: var(--admin-chrome-border);
+}
+
+.dark .admin-dashboard-stat-link:hover .admin-dashboard-stat-card {
+    box-shadow: 0 12px 36px rgba(45, 212, 191, 0.18);
+}
+
+/* Keep typed / autofilled / saved values readable */
+input,
+textarea,
+select {
+    color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    caret-color: hsl(var(--foreground));
+    box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
+    transition: background-color 99999s ease-in-out 0s;
+}
+
+/* Login panel is always a light surface — force dark text for saved/autofill values */
+.login-panel input,
+.login-panel textarea {
+    color: #0f172a !important;
+    caret-color: #0f172a;
+    -webkit-text-fill-color: #0f172a;
+}
+
+.login-panel input::placeholder,
+.login-panel textarea::placeholder {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8;
+    opacity: 1;
+}
+
+.login-panel input:-webkit-autofill,
+.login-panel input:-webkit-autofill:hover,
+.login-panel input:-webkit-autofill:focus,
+.login-panel input:-webkit-autofill:active {
+    -webkit-text-fill-color: #0f172a !important;
+    caret-color: #0f172a;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    transition: background-color 99999s ease-in-out 0s;
+}

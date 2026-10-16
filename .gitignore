@@ -1,0 +1,59 @@
+# Dependencies
+/node_modules
+/vendor
+
+# Environment
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+
+# Laravel
+/public/build
+/public/hot
+/public/storage
+/public/uploads
+/public/excels
+/public/collection_attachment
+/storage/*.key
+/storage/pail
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
+
+# Testing / coverage
+/.phpunit.cache
+.phpunit.result.cache
+/coverage
+/.nyc_output
+
+# Logs & dumps
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+dump.rdb
+*.sqlite
+*.sqlite3
+
+# Auth / local secrets
+Homestead.json
+Homestead.yaml
+auth.json
+
+# OS
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors / IDEs
+/.fleet
+/.idea
+/.vscode
+/.cursor
+*.swp
+*.swo
+*~
