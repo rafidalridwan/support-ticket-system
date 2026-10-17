@@ -22,6 +22,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const emptyCategory = { name: "", value: "" };
 
+/** "Abc Abc" / "Hardware Issue" → "abc_abc" / "hardware_issue" */
+function toCategoryValue(name) {
+    return String(name || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_");
+}
+
 export default function Index() {
     const { categories, auth, pagination } = usePage().props;
     const can = createPermissionChecker(auth);
@@ -153,10 +163,36 @@ export default function Index() {
                     <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
                         <DialogBody className="space-y-4">
                             <FormField label="Name" required error={form.errors.name}>
-                                <Input value={form.data.name} onChange={(e) => form.setData("name", e.target.value)} />
+                                <Input
+                                    value={form.data.name}
+                                    placeholder="e.g. Hardware Issue"
+                                    onChange={(e) => {
+                                        const name = e.target.value;
+                                        if (editing) {
+                                            form.setData("name", name);
+                                            return;
+                                        }
+                                        form.setData({
+                                            ...form.data,
+                                            name,
+                                            value: toCategoryValue(name),
+                                        });
+                                    }}
+                                />
                             </FormField>
-                            <FormField label="Value" required error={form.errors.value}>
-                                <Input value={form.data.value} onChange={(e) => form.setData("value", e.target.value)} />
+                            <FormField
+                                label="Value"
+                                required
+                                error={form.errors.value}
+                                hint={!editing ? "Auto-generated from name" : undefined}
+                            >
+                                <Input
+                                    value={form.data.value}
+                                    readOnly={!editing}
+                                    className={!editing ? "bg-[var(--admin-surface-muted)]" : undefined}
+                                    onChange={(e) => editing && form.setData("value", e.target.value)}
+                                    placeholder="hardware_issue"
+                                />
                             </FormField>
                         </DialogBody>
                         <DialogFooter>

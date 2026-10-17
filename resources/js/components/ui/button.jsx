@@ -40,6 +40,20 @@ const buttonVariants = cva(
 const Button = React.forwardRef(
     ({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }, ref) => {
         const Comp = asChild ? Slot : "button";
+
+        // Slot requires exactly one React element child.
+        if (asChild) {
+            return (
+                <Comp
+                    className={cn(buttonVariants({ variant, size, className }))}
+                    ref={ref}
+                    {...props}
+                >
+                    {children}
+                </Comp>
+            );
+        }
+
         return (
             <Comp
                 className={cn(buttonVariants({ variant, size, className }))}

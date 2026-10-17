@@ -1,9 +1,9 @@
-import { Head, router, useForm, usePage } from "@inertiajs/react";
-import { Plus, Save, X } from "lucide-react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
+import { Eye, Plus, Save, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import AppLayout from "../../../components/layouts/AppLayout";
-import { createPermissionChecker } from "../../../helpers/adminPermissions";
+import { createPermissionChecker, isAdministrator } from "../../../helpers/adminPermissions";
 import { DEFAULT_PER_PAGE, resolvePagination } from "../../../helpers/pagination";
 import { formatDateTime } from "@/helpers/utils";
 import FormField from "@/components/reusable/FormField";
@@ -27,6 +27,12 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const emptyTicket = {
     subject: "",
@@ -52,6 +58,17 @@ const PRIORITY_BADGE = {
 
 const priorityValue = (priority) => Number(priority?.value ?? priority);
 
+const SUBJECT_WORD_LIMIT = 8;
+
+/** Limit subject to N words and append "..." when truncated. */
+function limitWords(text, limit = SUBJECT_WORD_LIMIT) {
+    const value = String(text || "").trim();
+    if (!value) return "-";
+    const words = value.split(/\s+/);
+    if (words.length <= limit) return value;
+    return `${words.slice(0, limit).join(" ")}...`;
+}
+
 const cleanParams = (params) =>
     Object.fromEntries(
         Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== ""),
@@ -63,21 +80,25 @@ export default function Index() {
         categories = [],
         statuses = [],
         priorities = [],
+        agents = [],
         filters = {},
         pagination,
         auth,
     } = usePage().props;
     const can = createPermissionChecker(auth);
+    const isAdmin = isAdministrator(auth);
     const { options } = resolvePagination(pagination);
     const [currentPage, setCurrentPage] = useState(tickets?.current_page || 1);
     const [pageSize, setPageSize] = useState(tickets?.per_page || DEFAULT_PER_PAGE);
     const [open, setOpen] = useState(false);
+    const [assigningId, setAssigningId] = useState(null);
     const form = useForm(emptyTicket);
     const [filterData, setFilterData] = useState({
         search: filters.search || "",
         status_id: filters.status_id ? String(filters.status_id) : "",
         priority: filters.priority ? String(filters.priority) : "",
         category_id: filters.category_id ? String(filters.category_id) : "",
+        assigned_to: filters.assigned_to ? String(filters.assigned_to) : "",
         date_from: filters.date_from || "",
         date_to: filters.date_to || "",
     });
@@ -89,6 +110,7 @@ export default function Index() {
             status_id: filters.status_id ? String(filters.status_id) : "",
             priority: filters.priority ? String(filters.priority) : "",
             category_id: filters.category_id ? String(filters.category_id) : "",
+            assigned_to: filters.assigned_to ? String(filters.assigned_to) : "",
             date_from: filters.date_from || "",
             date_to: filters.date_to || "",
         });
@@ -140,6 +162,26 @@ export default function Index() {
         });
     };
 
+    const reassignTicket = (ticket, assignedTo) => {
+        if (!isAdmin || !ticket?.id) return;
+
+        const nextValue = assignedTo === "unassigned" ? null : Number(assignedTo);
+        const currentValue = ticket.assigned_to ?? null;
+        if (nextValue === currentValue || (nextValue === null && currentValue === null)) {
+            return;
+        }
+
+        setAssigningId(ticket.id);
+        router.post(
+            route("administrative.ticket.assign", ticket.unique_key),
+            { assigned_to: nextValue },
+            {
+                preserveScroll: true,
+                onFinish: () => setAssigningId(null),
+            },
+        );
+    };
+
     return (
         <AppLayout title="Tickets">
             <Head title="Tickets" />
@@ -167,7 +209,7 @@ export default function Index() {
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-7">
                     <Input
                         placeholder="Search tickets..."
                         value={filterData.search}
@@ -209,6 +251,19 @@ export default function Index() {
                             ))}
                         </SelectContent>
                     </Select>
+                    <Select
+                        value={filterData.assigned_to || "all"}
+                        onValueChange={(value) => updateFilter("assigned_to", value === "all" ? "" : value)}
+                    >
+                        <SelectTrigger><SelectValue placeholder="Agent" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All agents</SelectItem>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {agents.map((agent) => (
+                                <SelectItem key={agent.id} value={String(agent.id)}>{agent.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Input
                         type="date"
                         value={filterData.date_from}
@@ -232,12 +287,13 @@ export default function Index() {
                                 <TableHead>Status</TableHead>
                                 <TableHead>Assigned To</TableHead>
                                 <TableHead>Created</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {(tickets?.data || []).length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                                         No tickets found.
                                     </TableCell>
                                 </TableRow>
@@ -250,8 +306,17 @@ export default function Index() {
 
                                 return (
                                     <TableRow key={ticket.id}>
-                                        <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
-                                        <TableCell>{ticket.subject}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div>{ticket.ticket_number}</div>
+                                            {ticket.unique_key && (
+                                                <div className="mt-0.5 text-xs font-normal text-muted-foreground">
+                                                    #{ticket.unique_key}
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="max-w-[280px]" title={ticket.subject || ""}>
+                                            {limitWords(ticket.subject)}
+                                        </TableCell>
                                         <TableCell>{ticket.category?.name || "-"}</TableCell>
                                         <TableCell>
                                             <Badge variant={PRIORITY_BADGE[priority] || "outline"}>
@@ -263,8 +328,49 @@ export default function Index() {
                                                 {ticket.status?.name || "-"}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>{ticket.assignee?.name || "Unassigned"}</TableCell>
+                                        <TableCell className="min-w-[180px]">
+                                            {isAdmin ? (
+                                                <Select
+                                                    value={
+                                                        ticket.assigned_to
+                                                            ? String(ticket.assigned_to)
+                                                            : "unassigned"
+                                                    }
+                                                    disabled={assigningId === ticket.id}
+                                                    onValueChange={(value) => reassignTicket(ticket, value)}
+                                                >
+                                                    <SelectTrigger className="h-9">
+                                                        <SelectValue placeholder="Assign agent" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                                                        {agents.map((agent) => (
+                                                            <SelectItem key={agent.id} value={String(agent.id)}>
+                                                                {agent.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                ticket.assignee?.name || "Unassigned"
+                                            )}
+                                        </TableCell>
                                         <TableCell>{formatDateTime(ticket.created_at)}</TableCell>
+                                        <TableCell className="text-right">
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link
+                                                            href={route("administrative.ticket.show", ticket.unique_key)}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>View Details</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })}

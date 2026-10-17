@@ -57,6 +57,10 @@ Route::middleware('auth')->prefix('administrative')->name('administrative.')->gr
     Route::prefix('ticket')->name('ticket.')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');
         Route::post('/', [TicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
+        Route::post('/{ticket}/assign', [TicketController::class, 'assign'])->name('assign');
+        Route::post('/{ticket}/status', [TicketController::class, 'updateStatus'])->name('status');
     });
 
     Route::prefix('business-hour')->name('business-hour.')->group(function () {

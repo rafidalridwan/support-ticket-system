@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Ticket extends Model
 {
@@ -14,6 +15,7 @@ class Ticket extends Model
 
     protected $fillable = [
         'ticket_number',
+        'unique_key',
         'subject',
         'description',
         'created_by',
@@ -33,6 +35,18 @@ class Ticket extends Model
         'escalated_at',
         'closed_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Ticket $ticket) {
+            $ticket->unique_key = Str::upper(Str::random(6));
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'unique_key';
+    }
 
     protected function casts(): array
     {

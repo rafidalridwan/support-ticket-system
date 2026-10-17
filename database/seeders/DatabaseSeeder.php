@@ -12,8 +12,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolePermissionSeeder::class,
-            SlaPolicySeeder::class,
-            TicketStatusSeeder::class,
         ]);
 
         $user = User::updateOrCreate(

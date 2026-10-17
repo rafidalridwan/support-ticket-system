@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('ticket_number', 20)->unique();
             $table->string('subject');
             $table->text('description');
-
+            $table->string('unique_key', 6)->nullable();
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->restrictOnDelete();
@@ -36,6 +36,7 @@ return new class extends Migration
                 ->constrained('sla_policies')
                 ->nullOnDelete();
             $table->timestamp('sla_started_at')->nullable();
+            $table->timestamp('sla_due_at')->nullable();
             $table->timestamp('sla_warning_at')->nullable();
             $table->timestamp('sla_warning_sent_at')->nullable();
             $table->unsignedInteger('sla_minutes')->nullable();
