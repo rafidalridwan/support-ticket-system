@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import AdminShell from "./AdminShell";
-import AppFooter from "./Footer";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import SidebarBrandLogo from "./SidebarBrandLogo";
@@ -34,7 +33,7 @@ const AppLayout = ({ title, children }) => {
     return (
         <AdminShell>
             <div
-                className="flex h-screen max-h-screen overflow-hidden"
+                className="flex h-dvh max-h-dvh overflow-hidden"
                 style={{ backgroundColor: ADMIN_PAGE_BG_LIGHT }}
             >
                 {/* Sidebar */}
@@ -80,7 +79,7 @@ const AppLayout = ({ title, children }) => {
                         transition={{ duration: 0.2 }}
                     >
                         <main
-                            className="theme-scroll mx-2 mb-2 mt-2 box-border flex min-h-0 min-w-0 flex-1 flex-col overflow-auto rounded-xl p-3 shadow-lg sm:mx-4 sm:mb-4 sm:p-5"
+                            className="theme-scroll mx-2 mb-0 mt-2 box-border flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto rounded-xl p-3 shadow-lg sm:mx-4 sm:mb-0 sm:mt-4 sm:p-5"
                             style={{
                                 backgroundColor: ADMIN_SURFACE,
                                 boxShadow: "var(--admin-shadow)",
@@ -90,7 +89,6 @@ const AppLayout = ({ title, children }) => {
                         </main>
                     </motion.div>
 
-                    <AppFooter />
                 </div>
             </div>
         </AdminShell>

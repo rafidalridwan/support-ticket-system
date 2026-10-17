@@ -39,6 +39,24 @@ class RolePermissionSeeder extends Seeder
             ['role_create', 'Role Management'],
             ['role_edit', 'Role Management'],
             ['role_delete', 'Role Management'],
+
+            ['sla_policy_list', 'SLA Policy Management'],
+            ['sla_policy_create', 'SLA Policy Management'],
+            ['sla_policy_edit', 'SLA Policy Management'],
+            ['sla_policy_delete', 'SLA Policy Management'],
+
+            ['business_hour_list', 'Business Hour Management'],
+            ['business_hour_edit', 'Business Hour Management'],
+
+            ['ticket_status_list', 'Ticket Status Management'],
+            ['ticket_status_create', 'Ticket Status Management'],
+            ['ticket_status_edit', 'Ticket Status Management'],
+            ['ticket_status_delete', 'Ticket Status Management'],
+
+            ['ticket_category_list', 'Ticket Category Management'],
+            ['ticket_category_create', 'Ticket Category Management'],
+            ['ticket_category_edit', 'Ticket Category Management'],
+            ['ticket_category_delete', 'Ticket Category Management'],
         ];
 
         foreach ($permissions as [$name, $label]) {
