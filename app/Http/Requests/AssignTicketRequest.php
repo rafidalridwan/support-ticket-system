@@ -9,7 +9,7 @@ class AssignTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return (bool) $this->user()?->isSystemAdmin();
+        return (bool) $this->user()?->isAdministrator();
     }
 
     protected function prepareForValidation(): void

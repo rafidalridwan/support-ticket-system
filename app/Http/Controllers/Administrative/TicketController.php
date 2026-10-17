@@ -38,8 +38,7 @@ class TicketController extends Controller
             ])
             ->latest();
 
-        if ($user->isSystemAdmin()) {
-        
+        if ($user->isAdministrator()) {
         } elseif ($user->hasRole(Role::SupportAgent)) {
             $query->where('assigned_to', $user->id);
         } else {
@@ -52,8 +51,8 @@ class TicketController extends Controller
                     ->orWhere('unique_key', 'like', "%{$search}%")
                     ->orWhere('subject', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhereHas('creator', fn ($q) => $q->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('assignee', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('creator', fn($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('assignee', fn($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -112,7 +111,7 @@ class TicketController extends Controller
         $user = $request->user();
         $this->authorizeTicket($user, $ticket);
 
-        $canSeeInternalNotes = $user->isSystemAdmin()
+        $canSeeInternalNotes = $user->isAdministrator()
             || ($user->hasRole(Role::SupportAgent) && (int) $ticket->assigned_to === (int) $user->id);
 
         $messages = $ticket->messages()
@@ -189,7 +188,7 @@ class TicketController extends Controller
                 ]);
 
                 $sla = $this->slaTimes($policy, $now);
-                
+
                 $ticket->update([
                     'sla_started_at' => $sla['started_at'],
                     'sla_warning_at' => $sla['warning_at'],
@@ -412,7 +411,7 @@ class TicketController extends Controller
 
         $openTickets = Ticket::query()
             ->where('assigned_to', $agent->id)
-            ->whereHas('status', fn ($query) => $query->where('is_close', false))
+            ->whereHas('status', fn($query) => $query->where('is_close', false))
             ->count();
 
         $maxTickets = $profile->max_active_tickets ?: 10;
@@ -427,12 +426,12 @@ class TicketController extends Controller
     {
         return User::query()
             ->where('status', User::STATUS_ACTIVE)
-            ->whereHas('roles', fn ($query) => $query->where('name', Role::SupportAgent))
-            ->whereHas('agentProfile', fn ($query) => $query->where('is_available', true))
+            ->whereHas('roles', fn($query) => $query->where('name', Role::SupportAgent))
+            ->whereHas('agentProfile', fn($query) => $query->where('is_available', true))
             ->with('agentProfile')
             ->get()
-            ->sortBy(fn (User $agent) => Ticket::where('assigned_to', $agent->id)
-                ->whereHas('status', fn ($query) => $query->where('is_close', false))
+            ->sortBy(fn(User $agent) => Ticket::where('assigned_to', $agent->id)
+                ->whereHas('status', fn($query) => $query->where('is_close', false))
                 ->count())
             ->first();
     }
@@ -441,14 +440,14 @@ class TicketController extends Controller
     {
         return User::query()
             ->where('status', User::STATUS_ACTIVE)
-            ->whereHas('roles', fn ($query) => $query->where('name', Role::SupportAgent))
+            ->whereHas('roles', fn($query) => $query->where('name', Role::SupportAgent))
             ->orderBy('name')
             ->get(['id', 'name']);
     }
 
     private function authorizeTicket(User $user, Ticket $ticket): void
     {
-        if ($user->isSystemAdmin()) {
+        if ($user->isAdministrator()) {
             return;
         }
 

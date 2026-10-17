@@ -60,7 +60,7 @@ class StoreTicketMessageRequest extends FormRequest
             return false;
         }
 
-        if ($user->isSystemAdmin()) {
+        if ($user->isAdministrator()) {
             return true;
         }
 

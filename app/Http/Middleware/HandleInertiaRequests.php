@@ -43,10 +43,10 @@ class HandleInertiaRequests extends Middleware
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => array_map(fn ($name) => ['name' => $name], $roleNames),
+                'roles' => array_map(fn($name) => ['name' => $name], $roleNames),
             ];
 
-            $isAdministrator = $user->isSystemAdmin();
+            $isAdministrator = $user->isAdministrator();
             $permissions = $user->getAllPermissions()->pluck('name')->values()->all();
 
             $primaryRole = $user->roles()->select(['name', 'label'])->first();

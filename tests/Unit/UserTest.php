@@ -24,7 +24,7 @@ describe('User model', function () {
 
         $member = User::factory()->create();
 
-        expect($admin->isSystemAdmin())->toBeTrue()
-            ->and($member->fresh()->isSystemAdmin())->toBeFalse();
+        expect($admin->isAdministrator())->toBeTrue()
+            ->and($member->fresh()->isAdministrator())->toBeFalse();
     });
 });

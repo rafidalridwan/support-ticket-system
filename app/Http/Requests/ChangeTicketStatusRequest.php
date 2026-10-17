@@ -17,7 +17,7 @@ class ChangeTicketStatusRequest extends FormRequest
             return false;
         }
 
-        if ($user->isSystemAdmin()) {
+        if ($user->isAdministrator()) {
             return true;
         }
 
