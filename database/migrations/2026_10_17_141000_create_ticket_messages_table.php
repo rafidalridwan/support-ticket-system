@@ -18,6 +18,7 @@ return new class extends Migration
                 ->restrictOnDelete();
             $table->string('type', 20);
             $table->text('body');
+            $table->text('internal_agent_notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

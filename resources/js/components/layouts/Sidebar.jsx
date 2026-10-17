@@ -8,6 +8,7 @@ import {
     RiSettings3Line,
     RiShieldUserLine,
     RiTimeLine,
+    RiTicket2Line,
     RiTimerFlashLine,
     RiUser3Line,
 } from "react-icons/ri";
@@ -105,6 +106,7 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
     else if (url.includes("/business-hour")) selectedKey = "business-hours";
     else if (url.includes("/ticket-status")) selectedKey = "ticket-statuses";
     else if (url.includes("/ticket-category")) selectedKey = "ticket-categories";
+    else if (url.includes("/ticket")) selectedKey = "tickets";
 
     const isSettingsKey = [
         "users",
@@ -114,6 +116,7 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
         "business-hours",
         "ticket-statuses",
         "ticket-categories",
+        "tickets",
     ].includes(selectedKey);
     const [settingsOpen, setSettingsOpen] = useState(isSettingsKey);
 
@@ -131,7 +134,8 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
         hasPermission("business_hour_list") ||
         hasPermission("business_hour_edit") ||
         hasPermission("ticket_status_list") ||
-        hasPermission("ticket_category_list");
+        hasPermission("ticket_category_list") ||
+        hasPermission("ticket_list");
 
     return (
         <nav className="flex flex-col gap-1 px-2 py-2">
@@ -143,6 +147,17 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
                 collapsed={collapsed}
                 onNavigate={onNavigate}
             />
+
+            {(systemAdmin || hasPermission("ticket_list")) && (
+                <NavLink
+                    href={route("administrative.ticket.index")}
+                    icon={RiTicket2Line}
+                    label="Tickets"
+                    active={selectedKey === "tickets"}
+                    collapsed={collapsed}
+                    onNavigate={onNavigate}
+                />
+            )}
 
             {showSettings && (
                 <NavGroup

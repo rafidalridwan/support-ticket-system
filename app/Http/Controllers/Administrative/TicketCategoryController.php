@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketCategoryRequest;
 use App\Http\Requests\UpdateTicketCategoryRequest;
 use App\Models\TicketCategory;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TicketCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = min(100, max(10, $request->integer('per_page', 25)));
+
         return Inertia::render('Administrative/TicketCategory/Index', [
-            'categories' => TicketCategory::orderBy('name')->get(),
+            'categories' => TicketCategory::orderBy('name')->paginate($perPage)->withQueryString(),
         ]);
     }
 

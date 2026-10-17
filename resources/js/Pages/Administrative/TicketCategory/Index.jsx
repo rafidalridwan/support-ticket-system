@@ -1,9 +1,10 @@
-import { Head, useForm, usePage } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 import AppLayout from "../../../components/layouts/AppLayout";
 import { createPermissionChecker } from "../../../helpers/adminPermissions";
+import { DEFAULT_PER_PAGE, resolvePagination } from "../../../helpers/pagination";
 import ConfirmDialog from "@/components/reusable/ConfirmDialog";
 import FormField from "@/components/reusable/FormField";
 import { Button } from "@/components/ui/button";
@@ -16,13 +17,18 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DataPagination } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const emptyCategory = { name: "", value: "" };
 
 export default function Index() {
-    const { categories = [], auth } = usePage().props;
+    const { categories, auth, pagination } = usePage().props;
     const can = createPermissionChecker(auth);
+    const { options } = resolvePagination(pagination);
+    const categoryRows = categories?.data || [];
+    const [currentPage, setCurrentPage] = useState(categories?.current_page || 1);
+    const [pageSize, setPageSize] = useState(categories?.per_page || DEFAULT_PER_PAGE);
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [deleting, setDeleting] = useState(null);
@@ -83,7 +89,14 @@ export default function Index() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {categories.map((category) => (
+                        {categoryRows.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                                    No ticket categories found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {categoryRows.map((category) => (
                             <TableRow key={category.id}>
                                 <TableCell className="font-medium">{category.name}</TableCell>
                                 <TableCell>{category.value}</TableCell>
@@ -108,6 +121,28 @@ export default function Index() {
                         ))}
                     </TableBody>
                 </Table>
+                <DataPagination
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    total={categories?.total || 0}
+                    pageSizeOptions={options}
+                    className="border-0 bg-transparent px-0"
+                    onPageChange={(page) => {
+                        setCurrentPage(page);
+                        router.get(route("administrative.ticket-category.index"), {
+                            page,
+                            per_page: pageSize,
+                        }, { preserveState: true, preserveScroll: true, replace: true });
+                    }}
+                    onPageSizeChange={(size) => {
+                        setPageSize(size);
+                        setCurrentPage(1);
+                        router.get(route("administrative.ticket-category.index"), {
+                            page: 1,
+                            per_page: size,
+                        }, { preserveState: true, preserveScroll: true, replace: true });
+                    }}
+                />
             </div>
 
             <Dialog open={open} onOpenChange={setOpen}>

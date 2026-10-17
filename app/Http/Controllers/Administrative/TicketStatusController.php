@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketStatusRequest;
 use App\Http\Requests\UpdateTicketStatusRequest;
 use App\Models\TicketStatus;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TicketStatusController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = min(100, max(10, $request->integer('per_page', 25)));
+
         return Inertia::render('Administrative/TicketStatus/Index', [
-            'statuses' => TicketStatus::orderBy('id')->get(),
+            'statuses' => TicketStatus::orderBy('id')->paginate($perPage)->withQueryString(),
         ]);
     }
 

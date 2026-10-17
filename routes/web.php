@@ -8,6 +8,7 @@ use App\Http\Controllers\Administrative\RoleController;
 use App\Http\Controllers\Administrative\SlaPolicyController;
 use App\Http\Controllers\Administrative\TicketCategoryController;
 use App\Http\Controllers\Administrative\TicketStatusController;
+use App\Http\Controllers\Administrative\TicketController;
 use App\Http\Controllers\Administrative\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,13 +40,24 @@ Route::middleware('auth')->prefix('administrative')->name('administrative.')->gr
         Route::delete('/{slaPolicy}', [SlaPolicyController::class, 'destroy'])->name('destroy');
     });
 
-    Route::resource('ticket-status', TicketStatusController::class)
-        ->except(['show', 'create', 'edit'])
-        ->parameters(['ticket-status' => 'ticketStatus']);
+    Route::prefix('ticket-status')->name('ticket-status.')->group(function () {
+        Route::get('/', [TicketStatusController::class, 'index'])->name('index');
+        Route::post('/', [TicketStatusController::class, 'store'])->name('store');
+        Route::put('/{ticketStatus}', [TicketStatusController::class, 'update'])->name('update');
+        Route::delete('/{ticketStatus}', [TicketStatusController::class, 'destroy'])->name('destroy');
+    });
 
-    Route::resource('ticket-category', TicketCategoryController::class)
-        ->except(['show', 'create', 'edit'])
-        ->parameters(['ticket-category' => 'ticketCategory']);
+    Route::prefix('ticket-category')->name('ticket-category.')->group(function () {
+        Route::get('/', [TicketCategoryController::class, 'index'])->name('index');
+        Route::post('/', [TicketCategoryController::class, 'store'])->name('store');
+        Route::put('/{ticketCategory}', [TicketCategoryController::class, 'update'])->name('update');
+        Route::delete('/{ticketCategory}', [TicketCategoryController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('ticket')->name('ticket.')->group(function () {
+        Route::get('/', [TicketController::class, 'index'])->name('index');
+        Route::post('/', [TicketController::class, 'store'])->name('store');
+    });
 
     Route::prefix('business-hour')->name('business-hour.')->group(function () {
         Route::get('/', [BusinessHourDayController::class, 'edit'])->name('edit');
