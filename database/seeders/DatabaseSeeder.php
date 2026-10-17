@@ -10,7 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call(RolePermissionSeeder::class);
+        $this->call([
+            RolePermissionSeeder::class,
+            SlaPolicySeeder::class,
+            TicketStatusSeeder::class,
+        ]);
 
         $user = User::updateOrCreate(
             ['email' => 'administrator@gmail.com'],

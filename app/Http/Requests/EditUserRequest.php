@@ -49,7 +49,7 @@ class EditUserRequest extends FormRequest
                 'nullable',
                 'integer',
                 'min:1',
-                'max:65535',
+                'max:50',
             ],
         ];
     }

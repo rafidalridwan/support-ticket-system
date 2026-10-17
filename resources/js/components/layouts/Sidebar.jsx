@@ -4,8 +4,11 @@ import { ChevronDown } from "lucide-react";
 import {
     RiHomeOfficeLine,
     RiKey2Line,
+    RiListCheck,
     RiSettings3Line,
     RiShieldUserLine,
+    RiTimeLine,
+    RiTimerFlashLine,
     RiUser3Line,
 } from "react-icons/ri";
 import { route } from "ziggy-js";
@@ -98,8 +101,20 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
     if (url.includes("/user")) selectedKey = "users";
     else if (url.includes("/role")) selectedKey = "roles";
     else if (url.includes("/permission")) selectedKey = "permissions";
+    else if (url.includes("/sla-policy")) selectedKey = "sla-policies";
+    else if (url.includes("/business-hour")) selectedKey = "business-hours";
+    else if (url.includes("/ticket-status")) selectedKey = "ticket-statuses";
+    else if (url.includes("/ticket-category")) selectedKey = "ticket-categories";
 
-    const isSettingsKey = ["users", "roles", "permissions"].includes(selectedKey);
+    const isSettingsKey = [
+        "users",
+        "roles",
+        "permissions",
+        "sla-policies",
+        "business-hours",
+        "ticket-statuses",
+        "ticket-categories",
+    ].includes(selectedKey);
     const [settingsOpen, setSettingsOpen] = useState(isSettingsKey);
 
     useEffect(() => {
@@ -111,7 +126,12 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
         hasPermission("setting_menu") ||
         hasPermission("user_list") ||
         hasPermission("role_list") ||
-        hasPermission("permission_list");
+        hasPermission("permission_list") ||
+        hasPermission("sla_policy_list") ||
+        hasPermission("business_hour_list") ||
+        hasPermission("business_hour_edit") ||
+        hasPermission("ticket_status_list") ||
+        hasPermission("ticket_category_list");
 
     return (
         <nav className="flex flex-col gap-1 px-2 py-2">
@@ -159,6 +179,51 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
                             icon={RiKey2Line}
                             label="Permissions"
                             active={selectedKey === "permissions"}
+                            onNavigate={onNavigate}
+                        />
+                    )}
+                    {(systemAdmin ||
+                        hasPermission("sla_policy_list") ||
+                        hasPermission("setting_menu")) && (
+                        <NavLink
+                            href={route("administrative.sla-policy.index")}
+                            icon={RiTimerFlashLine}
+                            label="SLA Policies"
+                            active={selectedKey === "sla-policies"}
+                            onNavigate={onNavigate}
+                        />
+                    )}
+                    {(systemAdmin ||
+                        hasPermission("business_hour_list") ||
+                        hasPermission("business_hour_edit") ||
+                        hasPermission("setting_menu")) && (
+                        <NavLink
+                            href={route("administrative.business-hour.edit")}
+                            icon={RiTimeLine}
+                            label="Business Hours"
+                            active={selectedKey === "business-hours"}
+                            onNavigate={onNavigate}
+                        />
+                    )}
+                    {(systemAdmin ||
+                        hasPermission("ticket_status_list") ||
+                        hasPermission("setting_menu")) && (
+                        <NavLink
+                            href={route("administrative.ticket-status.index")}
+                            icon={RiListCheck}
+                            label="Ticket Statuses"
+                            active={selectedKey === "ticket-statuses"}
+                            onNavigate={onNavigate}
+                        />
+                    )}
+                    {(systemAdmin ||
+                        hasPermission("ticket_category_list") ||
+                        hasPermission("setting_menu")) && (
+                        <NavLink
+                            href={route("administrative.ticket-category.index")}
+                            icon={RiListCheck}
+                            label="Ticket Categories"
+                            active={selectedKey === "ticket-categories"}
                             onNavigate={onNavigate}
                         />
                     )}
