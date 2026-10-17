@@ -18,20 +18,29 @@ import { Input } from "@/components/ui/input";
 import FormField from "@/components/reusable/FormField";
 import { useAdminT } from "@/contexts/AdminI18nContext";
 
+const initialFormData = {
+    name: "",
+    label: "",
+};
+
 export default function Create() {
     const { t } = useAdminT();
     const title = "Create Permission";
     const [open, setOpen] = useState(false);
 
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
-        name: "",
-        label: "",
-    });
+    const { data, setData, post, processing, errors, clearErrors, setDefaults } =
+        useForm(initialFormData);
+
+    const resetForm = () => {
+        const next = { ...initialFormData };
+        setDefaults(next);
+        setData(next);
+        clearErrors();
+    };
 
     useEffect(() => {
         if (!open) {
-            reset();
-            clearErrors();
+            resetForm();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
@@ -39,7 +48,10 @@ export default function Create() {
     const handleSubmit = () => {
         post(route("administrative.permission.store"), {
             preserveScroll: true,
-            onSuccess: () => setOpen(false),
+            onSuccess: () => {
+                resetForm();
+                setOpen(false);
+            },
         });
     };
 

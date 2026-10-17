@@ -60,7 +60,6 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('image')->nullable();
             $table->string('status')->default('active');
             $table->boolean('is_protected')->default(false);
             $table->unsignedInteger('failed_login_attempts')->default(0);
@@ -158,7 +157,6 @@ return new class extends Migration
                 'role_has_permissions_permission_id_role_id_primary'
             );
         });
-
     }
 
     public function down(): void

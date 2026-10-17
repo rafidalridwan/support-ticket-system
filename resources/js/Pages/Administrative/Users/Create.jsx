@@ -1,4 +1,3 @@
-import SingleImageUpload from "@/components/reusable/SingleImageUpload";
 import FormField from "@/components/reusable/FormField";
 import PasswordStrengthChecklist from "@/components/reusable/PasswordStrengthChecklist";
 import { useAdminT } from "@/contexts/AdminI18nContext";
@@ -27,15 +26,18 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+const SUPPORT_AGENT_ROLE = "support_agent";
+
 const initialFormData = {
     name: "",
     phone: "",
     email: "",
     password: "",
     password_confirmation: "",
-    image: null,
     role: "",
     status: "active",
+    is_available: "1",
+    max_active_tickets: "10",
 };
 
 export default function Create() {
@@ -49,7 +51,7 @@ export default function Create() {
     );
 
     const [open, setOpen] = useState(false);
-    const { data, setData, post, processing, errors, reset, clearErrors, transform } =
+    const { data, setData, post, processing, errors, clearErrors, setDefaults } =
         useForm(initialFormData);
     const [passwordValidation, setPasswordValidation] = useState({
         hasLowerCase: false,
@@ -59,6 +61,15 @@ export default function Create() {
         minLength: false,
         notContainsName: true,
     });
+
+    const emptyPasswordValidation = {
+        hasLowerCase: false,
+        hasUpperCase: false,
+        hasNumber: false,
+        hasSpecialChar: false,
+        minLength: false,
+        notContainsName: true,
+    };
 
     const validatePassword = (password, userName) => {
         const validation = {
@@ -75,33 +86,28 @@ export default function Create() {
         return validation;
     };
 
+    const resetForm = () => {
+        const next = { ...initialFormData };
+        setDefaults(next);
+        setData(next);
+        clearErrors();
+        setPasswordValidation(emptyPasswordValidation);
+    };
+
     useEffect(() => {
         if (!open) {
-            reset(initialFormData);
-            clearErrors();
-            setPasswordValidation({
-                hasLowerCase: false,
-                hasUpperCase: false,
-                hasNumber: false,
-                hasSpecialChar: false,
-                minLength: false,
-                notContainsName: true,
-            });
+            resetForm();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     const handleSubmit = () => {
-        transform((form) => {
-            const next = { ...form };
-            if (!(next.image instanceof File)) delete next.image;
-            return next;
-        });
-
         post(route("administrative.user.store"), {
             preserveScroll: true,
-            forceFormData: true,
-            onSuccess: () => setOpen(false),
+            onSuccess: () => {
+                resetForm();
+                setOpen(false);
+            },
         });
     };
 
@@ -186,6 +192,46 @@ export default function Create() {
                             </Select>
                         </FormField>
 
+                        {data.role === SUPPORT_AGENT_ROLE ? (
+                            <>
+                                <FormField
+                                    label={t("user.isAvailable")}
+                                    required
+                                    error={errors.is_available}
+                                >
+                                    <Select
+                                        value={data.is_available}
+                                        onValueChange={(v) => setData("is_available", v)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t("user.isAvailablePh")} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1">{t("user.yes")}</SelectItem>
+                                            <SelectItem value="0">{t("user.no")}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </FormField>
+
+                                <FormField
+                                    label={t("user.maxActiveTickets")}
+                                    required
+                                    error={errors.max_active_tickets}
+                                >
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        max={65535}
+                                        value={data.max_active_tickets}
+                                        placeholder={t("user.maxActiveTicketsPh")}
+                                        onChange={(e) =>
+                                            setData("max_active_tickets", e.target.value)
+                                        }
+                                    />
+                                </FormField>
+                            </>
+                        ) : null}
+
                         <FormField label={t("user.password")} required error={errors.password}>
                             <PasswordInput
                                 value={data.password}
@@ -218,18 +264,6 @@ export default function Create() {
                                 onChange={(e) =>
                                     setData("password_confirmation", e.target.value)
                                 }
-                            />
-                        </FormField>
-
-                        <FormField
-                            label={t("user.image")}
-                            hint={t("user.imageFormats")}
-                            error={errors.image}
-                            className="md:col-span-2"
-                        >
-                            <SingleImageUpload
-                                value={data.image}
-                                onChange={(file) => setData("image", file ?? null)}
                             />
                         </FormField>
                     </div>

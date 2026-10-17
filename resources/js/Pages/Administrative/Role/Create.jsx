@@ -20,22 +20,31 @@ import FormField from "@/components/reusable/FormField";
 import PermissionCards from "@/components/reusable/PermissionCards";
 import { useAdminT } from "@/contexts/AdminI18nContext";
 
+const initialFormData = {
+    name: "",
+    label: "",
+    permissions: [],
+};
+
 export default function Create() {
     const { t } = useAdminT();
     const title = "Create Role";
     const [open, setOpen] = useState(false);
     const { permission } = usePage().props;
 
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
-        name: "",
-        label: "",
-        permissions: [],
-    });
+    const { data, setData, post, processing, errors, clearErrors, setDefaults } =
+        useForm(initialFormData);
+
+    const resetForm = () => {
+        const next = { ...initialFormData, permissions: [] };
+        setDefaults(next);
+        setData(next);
+        clearErrors();
+    };
 
     useEffect(() => {
         if (!open) {
-            reset();
-            clearErrors();
+            resetForm();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
@@ -43,7 +52,10 @@ export default function Create() {
     const handleSubmit = () => {
         post(route("administrative.role.store"), {
             preserveScroll: true,
-            onSuccess: () => setOpen(false),
+            onSuccess: () => {
+                resetForm();
+                setOpen(false);
+            },
         });
     };
 

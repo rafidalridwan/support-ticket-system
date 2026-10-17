@@ -1,5 +1,5 @@
 import { User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -7,11 +7,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { storagePublicUrl } from "@/components/reusable/SingleImageUpload";
 import { ADMIN_RED } from "@/theme/adminColors";
 
 const UserAvatar = ({ auth, children }) => {
-    const userImage = auth.user?.image ? storagePublicUrl(auth.user.image) : null;
     const userName = auth.user?.name || "";
     const initials = userName
         .split(" ")
@@ -28,7 +26,6 @@ const UserAvatar = ({ auth, children }) => {
                     className="cursor-pointer rounded-full ring-2 ring-white/35 transition-all hover:ring-white"
                 >
                     <Avatar>
-                        <AvatarImage src={userImage} alt={userName} />
                         <AvatarFallback style={{ backgroundColor: "#ffffff", color: ADMIN_RED }}>
                             {initials || <User className="h-4 w-4" />}
                         </AvatarFallback>

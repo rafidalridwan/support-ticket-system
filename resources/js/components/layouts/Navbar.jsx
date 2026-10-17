@@ -1,6 +1,5 @@
-import { storagePublicUrl } from "@/components/reusable/SingleImageUpload";
 import ThemeToggle from "@/components/reusable/ThemeToggle";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -46,7 +45,6 @@ const Navbar = ({ title, onToggle }) => {
     const [logoutOpen, setLogoutOpen] = useState(false);
 
     const userName = auth?.user?.name || "";
-    const userImage = auth?.user?.image ? storagePublicUrl(auth.user.image) : null;
     const initials = userName
         .split(" ")
         .map((part) => part[0])
@@ -124,7 +122,6 @@ const Navbar = ({ title, onToggle }) => {
                                     className="flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2.5 transition-colors hover:bg-[var(--admin-surface-muted)]"
                                 >
                                     <Avatar className="h-9 w-9 rounded-lg">
-                                        <AvatarImage src={userImage} alt={userName} />
                                         <AvatarFallback
                                             className="rounded-lg font-semibold text-white"
                                             style={{ background: "var(--admin-red-gradient)" }}

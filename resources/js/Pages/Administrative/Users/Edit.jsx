@@ -1,4 +1,3 @@
-import SingleImageUpload from "@/components/reusable/SingleImageUpload";
 import FormField from "@/components/reusable/FormField";
 import PasswordStrengthChecklist from "@/components/reusable/PasswordStrengthChecklist";
 import { useAdminT } from "@/contexts/AdminI18nContext";
@@ -27,6 +26,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+const SUPPORT_AGENT_ROLE = "support_agent";
+
 export default function Edit({ user, open: controlledOpen, onOpenChange, hideTrigger = false }) {
     const { t } = useAdminT();
     const title = t("user.editTitle");
@@ -48,13 +49,14 @@ export default function Edit({ user, open: controlledOpen, onOpenChange, hideTri
         return user.roles[0]?.name || "";
     }, [user?.roles, isValidUser]);
 
+    const agentProfile = user?.agent_profile ?? null;
+
     const buildInitialData = () => ({
         name: isValidUser ? (user?.name ?? "") : "",
         phone: isValidUser ? (user?.phone ?? "") : "",
         email: isValidUser ? (user?.email ?? "") : "",
         password: "",
         password_confirmation: "",
-        image: isValidUser ? (user?.image ?? null) : null,
         role: currentRoleName,
         status:
             isValidUser && user?.status !== undefined
@@ -64,9 +66,16 @@ export default function Edit({ user, open: controlledOpen, onOpenChange, hideTri
                       ? "inactive"
                       : String(user.status)
                 : "active",
+        is_available:
+            agentProfile?.is_available === false ||
+            agentProfile?.is_available === 0 ||
+            agentProfile?.is_available === "0"
+                ? "0"
+                : "1",
+        max_active_tickets: String(agentProfile?.max_active_tickets ?? 10),
     });
 
-    const { data, setData, post, processing, errors, reset, clearErrors, transform } =
+    const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm(buildInitialData());
     const [passwordValidation, setPasswordValidation] = useState({
         hasLowerCase: false,
@@ -123,22 +132,8 @@ export default function Edit({ user, open: controlledOpen, onOpenChange, hideTri
     };
 
     const handleSubmit = () => {
-        transform((form) => {
-            const next = { ...form };
-            if (next.image instanceof File) {
-                // keep uploaded file
-            } else if (next.image == null || next.image === "") {
-                next.clear_image = true;
-                delete next.image;
-            } else {
-                delete next.image;
-            }
-            return next;
-        });
-
         post(route("administrative.user.update", user.id), {
             preserveScroll: true,
-            forceFormData: true,
             onSuccess: () => setOpen(false),
         });
     };
@@ -225,6 +220,46 @@ export default function Edit({ user, open: controlledOpen, onOpenChange, hideTri
                             </Select>
                         </FormField>
 
+                        {data.role === SUPPORT_AGENT_ROLE ? (
+                            <>
+                                <FormField
+                                    label={t("user.isAvailable")}
+                                    required
+                                    error={errors.is_available}
+                                >
+                                    <Select
+                                        value={data.is_available}
+                                        onValueChange={(v) => setData("is_available", v)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t("user.isAvailablePh")} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1">{t("user.yes")}</SelectItem>
+                                            <SelectItem value="0">{t("user.no")}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </FormField>
+
+                                <FormField
+                                    label={t("user.maxActiveTickets")}
+                                    required
+                                    error={errors.max_active_tickets}
+                                >
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        max={65535}
+                                        value={data.max_active_tickets}
+                                        placeholder={t("user.maxActiveTicketsPh")}
+                                        onChange={(e) =>
+                                            setData("max_active_tickets", e.target.value)
+                                        }
+                                    />
+                                </FormField>
+                            </>
+                        ) : null}
+
                         <FormField label={t("user.password")} error={errors.password}>
                             <PasswordInput
                                 value={data.password}
@@ -258,18 +293,6 @@ export default function Edit({ user, open: controlledOpen, onOpenChange, hideTri
                                 onChange={(e) =>
                                     setData("password_confirmation", e.target.value)
                                 }
-                            />
-                        </FormField>
-
-                        <FormField
-                            label={t("user.image")}
-                            hint={t("user.imageFormats")}
-                            error={errors.image}
-                            className="md:col-span-2"
-                        >
-                            <SingleImageUpload
-                                value={data.image}
-                                onChange={(file) => setData("image", file ?? null)}
                             />
                         </FormField>
                     </div>

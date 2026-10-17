@@ -8,7 +8,6 @@ use App\Http\Requests\StoreUserRequest;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -18,7 +17,7 @@ class UserController extends Controller
         $perPage = min(100, max(10, $request->integer('per_page', 25)));
         $sortDir = $request->string('sort_dir')->toString() === 'asc' ? 'asc' : 'desc';
 
-        $query = User::query()->with(['roles:id,name,label']);
+        $query = User::query()->with(['roles:id,name,label', 'agentProfile']);
 
         if ($search = trim((string) $request->input('search', ''))) {
             $query->where(function ($q) use ($search) {
@@ -77,12 +76,8 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
-        $attributes = $request->safe()->except(['role', 'image', 'clear_image']);
+        $attributes = $request->validated();
         $roleName = (string) $request->role;
-
-        if ($request->hasFile('image')) {
-            $attributes['image'] = $request->file('image')->store('users', 'public');
-        }
 
         $user = User::create($attributes);
 
@@ -90,12 +85,14 @@ class UserController extends Controller
             $user->assignRole($role);
         }
 
+        $this->syncAgentProfile($user, $roleName, $request);
+
         return redirect()->route('administrative.user.index')->with('success', 'User created successfully.');
     }
 
     public function edit(User $user)
     {
-        $user->load('roles');
+        $user->load(['roles', 'agentProfile']);
 
         return Inertia::render('Administrative/Users/Edit', [
             'user' => $user,
@@ -105,23 +102,12 @@ class UserController extends Controller
 
     public function update(EditUserRequest $request, User $user)
     {
-        $attributes = $request->safe()->except(['role', 'image', 'clear_image']);
+        $attributes = $request->validated();
+            
         $roleName = (string) $request->role;
 
         if (empty($attributes['password'])) {
             unset($attributes['password']);
-        }
-
-        if ($request->hasFile('image')) {
-            if ($user->image) {
-                Storage::disk('public')->delete($user->image);
-            }
-            $attributes['image'] = $request->file('image')->store('users', 'public');
-        } elseif ($request->boolean('clear_image')) {
-            if ($user->image) {
-                Storage::disk('public')->delete($user->image);
-            }
-            $attributes['image'] = null;
         }
 
         if ($role = Role::query()->where('name', $roleName)->first()) {
@@ -129,6 +115,8 @@ class UserController extends Controller
         }
 
         $user->update($attributes);
+
+        $this->syncAgentProfile($user, $roleName, $request);
 
         return redirect()->route('administrative.user.index')->with('success', 'User updated successfully.');
     }
@@ -150,13 +138,26 @@ class UserController extends Controller
             return redirect()->route('administrative.user.index')->with('error', 'This user is protected and cannot be deleted.');
         }
 
-        if ($user->image) {
-            Storage::disk('public')->delete($user->image);
-        }
-
         $user->delete();
 
         return redirect()->route('administrative.user.index')->with('success', 'User deleted successfully.');
+    }
+
+    private function syncAgentProfile(User $user, string $roleName, Request $request): void
+    {
+        if ($roleName === Role::SupportAgent) {
+            $user->agentProfile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'is_available' => $request->boolean('is_available', true),
+                    'max_active_tickets' => $request->integer('max_active_tickets', 10),
+                ]
+            );
+
+            return;
+        }
+
+        $user->agentProfile()->delete();
     }
 
     private function roleOptions()
