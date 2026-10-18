@@ -18,6 +18,7 @@ use App\Models\TicketCategory;
 use App\Models\TicketMessage;
 use App\Models\TicketStatus;
 use App\Models\User;
+use App\Notifications\TicketEventNotification;
 use App\Services\BusinessHoursSlaCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -171,6 +172,22 @@ class TicketController extends Controller
             return $ticket;
         });
 
+        $ticket->load(['creator', 'assignee']);
+
+        $ticket->creator?->notify(new TicketEventNotification(
+            $ticket,
+            'ticket_created',
+            "Your ticket {$ticket->ticket_number} was created."
+        ));
+
+        if ($ticket->assignee) {
+            $ticket->assignee->notify(new TicketEventNotification(
+                $ticket,
+                'ticket_assigned',
+                "Ticket {$ticket->ticket_number} was assigned to you."
+            ));
+        }
+
         return redirect()
             ->route('administrative.ticket.index')
             ->with('success', "Ticket {$ticket->ticket_number} created successfully.");
@@ -216,6 +233,25 @@ class TicketController extends Controller
                 'description' => $isInternal ? 'Internal note added.' : 'New reply added.',
             ]);
         });
+
+        if (! $isInternal) {
+            $ticket->loadMissing(['creator', 'assignee']);
+            $actorId = (int) $request->user()->id;
+
+            if ($actorId === (int) $ticket->created_by && $ticket->assignee) {
+                $ticket->assignee->notify(new TicketEventNotification(
+                    $ticket,
+                    'customer_replied',
+                    "Customer replied on ticket {$ticket->ticket_number}."
+                ));
+            } elseif ($ticket->creator && $actorId !== (int) $ticket->created_by) {
+                $ticket->creator->notify(new TicketEventNotification(
+                    $ticket,
+                    'agent_replied',
+                    "An agent replied on ticket {$ticket->ticket_number}."
+                ));
+            }
+        }
 
         return redirect()
             ->route('administrative.ticket.show', $ticket)
@@ -271,6 +307,12 @@ class TicketController extends Controller
                     'new_values' => ['assigned_to' => $agent->id],
                     'description' => "Ticket reassigned to {$agent->name}.",
                 ]);
+
+                $agent->notify(new TicketEventNotification(
+                    $ticket,
+                    'ticket_assigned',
+                    "Ticket {$ticket->ticket_number} was assigned to you."
+                ));
             } else {
                 $ticket->update([
                     'assigned_to' => null,
@@ -338,6 +380,15 @@ class TicketController extends Controller
                 }
             }
         });
+
+        if ($status->value === 'resolved' || $status->is_close) {
+            $ticket->loadMissing('creator');
+            $ticket->creator?->notify(new TicketEventNotification(
+                $ticket,
+                'ticket_resolved',
+                "Ticket {$ticket->ticket_number} was marked as {$status->name}."
+            ));
+        }
 
         return redirect()
             ->route('administrative.ticket.show', $ticket)

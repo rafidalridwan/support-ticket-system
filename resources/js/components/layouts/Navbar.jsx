@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useAdminT } from "../../contexts/AdminI18nContext";
 import { ADMIN_CHROME_BORDER, ADMIN_CHROME_TEXT, ADMIN_CHROME_TEXT_MUTED } from "../../theme/adminColors";
 import ConfirmDialog from "../reusable/ConfirmDialog";
+import NotificationBell from "./NotificationBell";
 
 const MenuButton = ({ onClick }) => {
     return (
@@ -69,6 +70,7 @@ const Navbar = ({ title, onToggle }) => {
 
                     <div className="ml-auto flex shrink-0 items-center gap-2">
                         <ThemeToggle />
+                        <NotificationBell />
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

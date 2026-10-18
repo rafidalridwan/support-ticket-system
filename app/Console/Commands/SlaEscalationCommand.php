@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Models\TicketActivity;
 use App\Models\TicketAssignment;
 use App\Models\User;
+use App\Notifications\TicketEventNotification;
 use Illuminate\Console\Command;
 
 class SlaEscalationCommand extends Command
@@ -40,6 +41,13 @@ class SlaEscalationCommand extends Command
                         'sla_warning_at' => $now,
                         'sla_warning_sent_at' => $now,
                     ]);
+
+                    $ticket->loadMissing('assignee');
+                    $ticket->assignee?->notify(new TicketEventNotification(
+                        $ticket,
+                        'sla_approaching',
+                        "SLA is approaching for ticket {$ticket->ticket_number}."
+                    ));
 
                     $this->info("Warning set for ticket #{$ticket->id}");
                 }
@@ -101,6 +109,22 @@ class SlaEscalationCommand extends Command
                     ? "SLA breached. Reassigned to {$agent->name}."
                     : 'SLA breached. No available agent for reassignment.',
             ]);
+
+            $breachMessage = "SLA breached for ticket {$ticket->ticket_number}.";
+            if ($oldAgentId) {
+                User::find($oldAgentId)?->notify(new TicketEventNotification(
+                    $ticket,
+                    'sla_breached',
+                    $breachMessage
+                ));
+            }
+            if ($agent) {
+                $agent->notify(new TicketEventNotification(
+                    $ticket,
+                    'sla_breached',
+                    $breachMessage.' It was reassigned to you.'
+                ));
+            }
 
             $this->info("Ticket #{$ticket->id} escalated.");
         }
