@@ -27,7 +27,6 @@ class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
         $query = Ticket::query()
             ->with([
                 'creator:id,name',
@@ -36,73 +35,17 @@ class TicketController extends Controller
                 'status:id,name,value',
                 'slaPolicy:id,name',
             ])
-            ->latest();
-
-        if ($user->isAdministrator()) {
-        } elseif ($user->hasRole(Role::SupportAgent)) {
-            $query->where('assigned_to', $user->id);
-        } else {
-            $query->where('created_by', $user->id);
-        }
-
-        if ($search = trim((string) $request->input('search', ''))) {
-            $query->where(function ($query) use ($search) {
-                $query->where('ticket_number', 'like', "%{$search}%")
-                    ->orWhere('unique_key', 'like', "%{$search}%")
-                    ->orWhere('subject', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhereHas('creator', fn($q) => $q->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('assignee', fn($q) => $q->where('name', 'like', "%{$search}%"));
-            });
-        }
-
-        if ($request->filled('status_id')) {
-            $query->where('status_id', $request->integer('status_id'));
-        }
-
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->integer('priority'));
-        }
-
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->integer('category_id'));
-        }
-
-        if ($request->filled('sla_status')) {
-            $status = $request->input('sla_status');
-            $now = now();
-
-            if ($status === 'sla_breached') {
-                $query->whereNotNull('sla_due_at')
-                    ->where('sla_due_at', '<', $now);
-            } elseif ($status === 'approaching_sla_breach') {
-                $query->whereBetween('sla_due_at', [
-                    $now,
-                    $now->copy()->addMinutes(30),
-                ]);
-            } elseif ($status === 'within_sla') {
-                $query->whereNotNull('sla_due_at')
-                        ->Where('sla_due_at', '>', $now->copy()->addMinutes(30));
-            }
-        }
-
-        if ($request->filled('assigned_to')) {
-            $assignedTo = (string) $request->input('assigned_to');
-
-            if ($assignedTo === 'unassigned') {
-                $query->whereNull('assigned_to');
-            } else {
-                $query->where('assigned_to', (int) $assignedTo);
-            }
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date('date_to'));
-        }
+            ->latest()
+            ->search($request->only([
+                'search',
+                'status_id',
+                'priority',
+                'category_id',
+                'assigned_to',
+                'sla_status',
+                'date_from',
+                'date_to',
+            ]));
 
         $perPage = min(100, max(10, $request->integer('per_page', 25)));
 
