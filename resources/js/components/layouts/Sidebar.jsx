@@ -116,7 +116,6 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
         "business-hours",
         "ticket-statuses",
         "ticket-categories",
-        "tickets",
     ].includes(selectedKey);
     const [settingsOpen, setSettingsOpen] = useState(isSettingsKey);
 
