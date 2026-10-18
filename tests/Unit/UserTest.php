@@ -16,11 +16,11 @@ describe('User model', function () {
         expect($user->isActive())->toBeFalse();
     });
 
-    it('identifies system admin via role', function () {
+    it('identifies administrator via role', function () {
         $this->seed(RolePermissionSeeder::class);
 
         $admin = User::factory()->create();
-        $admin->assignRole('system_admin');
+        $admin->assignRole('administrator');
 
         $member = User::factory()->create();
 

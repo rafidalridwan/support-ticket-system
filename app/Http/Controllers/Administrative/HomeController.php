@@ -6,6 +6,7 @@ use App\Enums\SlaPolicyPriority;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketStatus;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -54,11 +55,13 @@ class HomeController extends Controller
                 'name' => $row->name,
                 'count' => (int) $row->count,
             ]);
-
+        $user = Auth::user();
+        $isStaff = $user?->hasAnyRole(['administrator', 'user']) ?? false;
         return Inertia::render('Administrative/Dashboard', [
             'stats' => $stats,
             'byPriority' => $byPriority,
             'byAgent' => $byAgent,
+            'isStaff' => $isStaff,
             'resolvedStatusId' => TicketStatus::query()->where('value', 'resolved')->value('id'),
         ]);
     }

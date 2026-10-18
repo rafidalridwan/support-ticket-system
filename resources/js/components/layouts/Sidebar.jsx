@@ -158,7 +158,7 @@ const Sidebar = ({ collapsed = false, onNavigate }) => {
                 />
             )}
 
-            {showSettings && (
+            {showSettings && systemAdmin && (
                 <NavGroup
                     icon={RiSettings3Line}
                     label="Settings"

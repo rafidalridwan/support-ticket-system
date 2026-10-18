@@ -107,7 +107,7 @@ function ChartCard({ title, children, empty }) {
 }
 
 export default function Dashboard() {
-    const { auth, stats = {}, byPriority = [], byAgent = [], resolvedStatusId } = usePage().props;
+    const { auth, stats = {}, byPriority = [], byAgent = [], resolvedStatusId, isStaff } = usePage().props;
     const userName = auth?.user?.name || "Admin";
     const locale = auth?.locale || "en";
     const n = (value) => formatAdminInteger(value ?? 0, locale);
@@ -192,17 +192,22 @@ export default function Dashboard() {
                     >
                         Welcome, {userName}
                     </h2>
+                    {isStaff && (
                     <p className="mt-2 text-sm" style={{ color: ADMIN_CHROME_TEXT_MUTED }}>
                         Ticket overview — open work, SLA risk, and agent load at a glance.
                     </p>
+                    )}
                 </div>
 
+                {isStaff && (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {kpiCards.map((card) => (
                         <StatCard key={card.key} {...card} />
                     ))}
                 </div>
+                )}
 
+                {isStaff && (
                 <div className="grid gap-4 lg:grid-cols-2">
                     <ChartCard title="Tickets by priority" empty={priorityTotal === 0}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -286,6 +291,7 @@ export default function Dashboard() {
                         </ResponsiveContainer>
                     </ChartCard>
                 </div>
+                )}
             </div>
         </AppLayout>
     );

@@ -48,7 +48,7 @@ describe('Authentication', function () {
             'email' => 'inactive@example.com',
             'password' => 'password',
         ]);
-        $user->assignRole('system_admin');
+        $user->assignRole('administrator');
 
         $this->from(route('login'))
             ->post('/login', [
