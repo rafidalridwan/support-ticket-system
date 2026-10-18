@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
-import { ArrowLeft, Paperclip, Send, X } from "lucide-react";
+import { ArrowLeft, History, Paperclip, Send, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import AppLayout from "../../../components/layouts/AppLayout";
@@ -8,6 +8,14 @@ import { formatDateTime } from "@/helpers/utils";
 import { storagePublicUrl } from "@/components/reusable/SingleImageUpload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogBody,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {
     Select,
     SelectContent,
@@ -125,8 +133,10 @@ function ChatBubble({ mine, name, time, body, attachments = [], internal = false
 export default function Show() {
     const {
         ticket,
+        activities = [],
         priorities = [],
         statuses = [],
+        canSeeHistory = false,
         canUseInternalNote = false,
         auth,
     } = usePage().props;
@@ -134,6 +144,7 @@ export default function Show() {
     const fileInputRef = useRef(null);
     const chatEndRef = useRef(null);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [historyOpen, setHistoryOpen] = useState(false);
     const isClosed = Boolean(ticket?.status?.is_close);
     const isAdmin = isAdministrator(auth);
     const isAssignedAgent =
@@ -260,6 +271,13 @@ export default function Show() {
                             <p className="mt-1 text-sm text-muted-foreground">{ticket.subject}</p>
                         </div>
                     </div>
+
+                    {canSeeHistory && (
+                        <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+                            <History className="h-4 w-4" />
+                            History
+                        </Button>
+                    )}
                 </div>
 
                 <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -422,7 +440,7 @@ export default function Show() {
                             </InfoRow>
                             <InfoRow label="Priority">
                                 <Badge variant={PRIORITY_BADGE[priorityValue] || "outline"}>
-                                    {priorityLabel}
+                                    {priorityLabel} - {formatSlaMinutes(ticket.sla_minutes)}
                                 </Badge>
                             </InfoRow>
                             <InfoRow label="Category">{ticket.category?.name || "-"}</InfoRow>
@@ -434,8 +452,8 @@ export default function Show() {
                             )}
                             {isStaff ? (
                                 <>
-                                    <InfoRow label="Total time">
-                                        {formatSlaMinutes(ticket.sla_minutes)}
+                                    <InfoRow label="SLA Status">
+                                        {ticket.sla_status}
                                     </InfoRow>
                                     <InfoRow label="Resolve time">
                                         {ticket.sla_due_at ? (
@@ -468,6 +486,39 @@ export default function Show() {
                     </aside>
                 </div>
             </div>
+
+            {canSeeHistory && (
+                <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+                    <DialogContent side="right" size="default">
+                        <DialogHeader>
+                            <DialogTitle>Ticket history</DialogTitle>
+                            <DialogDescription>
+                                Activity log visible to agents and admins.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogBody>
+                            {activities.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No activity yet.</p>
+                            ) : (
+                                <ol className="relative space-y-4 border-l border-[var(--admin-chrome-border)] pl-4">
+                                    {activities.map((activity) => (
+                                        <li key={activity.id} className="relative">
+                                            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
+                                            <p className="text-sm font-medium text-foreground">
+                                                {activity.description || activity.event}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {activity.actor?.name || "System"} ·{" "}
+                                                {formatDateTime(activity.created_at)}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ol>
+                            )}
+                        </DialogBody>
+                    </DialogContent>
+                </Dialog>
+            )}
         </AppLayout>
     );
 }

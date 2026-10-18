@@ -40,6 +40,7 @@ return new class extends Migration
             $table->timestamp('sla_warning_at')->nullable();
             $table->timestamp('sla_warning_sent_at')->nullable();
             $table->unsignedInteger('sla_minutes')->nullable();
+            $table->boolean('sla_breached')->default(false);
             $table->timestamp('sla_breached_at')->nullable();
 
             $table->boolean('is_escalated')->default(false);

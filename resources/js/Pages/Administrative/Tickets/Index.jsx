@@ -56,6 +56,18 @@ const PRIORITY_BADGE = {
     4: "destructive",
 };
 
+const SLA_STATUS_LABEL = {
+    sla_breached: "SLA Breached",
+    approaching_sla_breach: "Approaching SLA Breach",
+    within_sla: "Within SLA",
+};
+
+const SLA_STATUS_BADGE = {
+    sla_breached: "destructive",
+    approaching_sla_breach: "warning",
+    within_sla: "success",
+};
+
 const priorityValue = (priority) => Number(priority?.value ?? priority);
 
 const SUBJECT_WORD_LIMIT = 8;
@@ -99,6 +111,7 @@ export default function Index() {
         priority: filters.priority ? String(filters.priority) : "",
         category_id: filters.category_id ? String(filters.category_id) : "",
         assigned_to: filters.assigned_to ? String(filters.assigned_to) : "",
+        sla_status: filters.sla_status ? String(filters.sla_status) : "",
         date_from: filters.date_from || "",
         date_to: filters.date_to || "",
     });
@@ -111,6 +124,7 @@ export default function Index() {
             priority: filters.priority ? String(filters.priority) : "",
             category_id: filters.category_id ? String(filters.category_id) : "",
             assigned_to: filters.assigned_to ? String(filters.assigned_to) : "",
+            sla_status: filters.sla_status ? String(filters.sla_status) : "",
             date_from: filters.date_from || "",
             date_to: filters.date_to || "",
         });
@@ -264,6 +278,20 @@ export default function Index() {
                             ))}
                         </SelectContent>
                     </Select>
+                    {isAdmin && (
+                    <Select
+                        value={filterData.sla_status || "all"}
+                        onValueChange={(value) => updateFilter("sla_status", value === "all" ? "" : value)}
+                    >
+                        <SelectTrigger><SelectValue placeholder="SLA Status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All SLA statuses</SelectItem>
+                            {Object.entries(SLA_STATUS_LABEL).map(([value, label]) => (
+                                <SelectItem key={value} value={String(value)}>{label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    )}
                     <Input
                         type="date"
                         value={filterData.date_from}

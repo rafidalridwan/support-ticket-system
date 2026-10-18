@@ -48,6 +48,10 @@ class Ticket extends Model
         return 'unique_key';
     }
 
+    protected $appends = [
+        'sla_status',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -58,6 +62,7 @@ class Ticket extends Model
             'sla_warning_sent_at' => 'datetime',
             'sla_due_at' => 'datetime',
             'sla_minutes' => 'integer',
+            'sla_breached' => 'boolean',
             'sla_breached_at' => 'datetime',
             'is_escalated' => 'boolean',
             'escalated_at' => 'datetime',
@@ -108,5 +113,22 @@ class Ticket extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(TicketActivity::class);
+    }
+
+    public function getSlaStatusAttribute(): string
+    {
+        if (! $this->sla_due_at) {
+            return 'within_sla';
+        }
+
+        if ($this->sla_due_at->isPast()) {
+            return 'sla_breached';
+        }
+
+        if (now()->diffInMinutes($this->sla_due_at) <= 30) {
+            return 'approaching_sla_breach';
+        }
+
+        return 'within_sla';
     }
 }

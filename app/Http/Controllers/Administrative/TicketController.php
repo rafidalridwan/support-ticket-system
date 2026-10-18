@@ -68,6 +68,24 @@ class TicketController extends Controller
             $query->where('category_id', $request->integer('category_id'));
         }
 
+        if ($request->filled('sla_status')) {
+            $status = $request->input('sla_status');
+            $now = now();
+
+            if ($status === 'sla_breached') {
+                $query->whereNotNull('sla_due_at')
+                    ->where('sla_due_at', '<', $now);
+            } elseif ($status === 'approaching_sla_breach') {
+                $query->whereBetween('sla_due_at', [
+                    $now,
+                    $now->copy()->addMinutes(30),
+                ]);
+            } elseif ($status === 'within_sla') {
+                $query->whereNotNull('sla_due_at')
+                        ->Where('sla_due_at', '>', $now->copy()->addMinutes(30));
+            }
+        }
+
         if ($request->filled('assigned_to')) {
             $assignedTo = (string) $request->input('assigned_to');
 
@@ -100,6 +118,7 @@ class TicketController extends Controller
                 'priority',
                 'category_id',
                 'assigned_to',
+                'sla_status',
                 'date_from',
                 'date_to',
             ]),
@@ -111,32 +130,33 @@ class TicketController extends Controller
         $user = $request->user();
         $this->authorizeTicket($user, $ticket);
 
-        $canSeeInternalNotes = $user->isAdministrator()
+        $canSeeHistory = $user->isAdministrator() || $user->hasRole(Role::SupportAgent);
+        $canUseInternalNote = $user->isAdministrator()
             || ($user->hasRole(Role::SupportAgent) && (int) $ticket->assigned_to === (int) $user->id);
-
-        $messages = $ticket->messages()
-            ->with([
-                'user:id,name',
-                'attachments:id,ticket_id,message_id,path,original_name,mime_type,size_bytes',
-            ])
-            ->oldest();
-
-        if (! $canSeeInternalNotes) {
-            $messages->where('type', '!=', 'internal_note');
-        }
 
         $ticket->load([
             'creator:id,name',
             'assignee:id,name',
             'category:id,name',
             'status:id,name,value,is_close',
+            'messages' => fn ($query) => $query
+                ->with([
+                    'user:id,name',
+                    'attachments:id,ticket_id,message_id,path,original_name,mime_type,size_bytes',
+                ])
+                ->when(! $canUseInternalNote, fn ($query) => $query->where('type', '!=', 'internal_note'))
+                ->oldest(),
         ]);
 
-        $ticket->setRelation('messages', $messages->get());
+        $activities = $canSeeHistory
+            ? $ticket->activities()->with('actor:id,name')->latest('created_at')->get()
+            : collect();
 
         return Inertia::render('Administrative/Tickets/Show', [
             'ticket' => $ticket,
-            'canUseInternalNote' => $canSeeInternalNotes,
+            'activities' => $activities,
+            'canSeeHistory' => $canSeeHistory,
+            'canUseInternalNote' => $canUseInternalNote,
             'priorities' => SlaPolicyPriority::options(),
             'statuses' => TicketStatus::orderBy('id')->get(['id', 'name', 'value', 'is_close']),
         ]);
@@ -291,6 +311,7 @@ class TicketController extends Controller
                 ]);
 
                 $sla = $this->slaTimes($policy, $now);
+                
                 $ticket->update([
                     'sla_started_at' => $sla['started_at'],
                     'sla_warning_at' => $sla['warning_at'],
