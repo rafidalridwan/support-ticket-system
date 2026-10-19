@@ -83,7 +83,7 @@ class LoginRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
-     * Sanitize input to prevent SQL injection and XSS attacks.
+     * Strip control characters; credentials are bound via Eloquent (not concatenated into SQL).
      */
     protected function prepareForValidation(): void
     {
@@ -91,14 +91,12 @@ class LoginRequest extends FormRequest
         $password = $this->input('password');
 
         if ($email !== null) {
-            $email = trim(str_replace("\0", '', (string) $email));
+            $email = trim(preg_replace('/[\x00-\x1F\x7F]/', '', (string) $email) ?? '');
         }
 
-        // Ensure password is preserved even if empty string (don't convert to null)
-        // This prevents validation from running when password is intentionally empty
         $this->merge([
             'email' => $email,
-            'password' => $password ?? '', // Preserve empty string, don't convert to null
+            'password' => is_string($password) ? $password : '',
         ]);
     }
 
@@ -109,13 +107,13 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
+        $this->ensureIsNotRateLimited();
+
         $lockouts = app(AccountLockoutService::class);
         $user = $this->findUser();
 
         if ($user) {
             $this->ensureAccountIsUnlocked($user, $lockouts);
-        } else {
-            $this->ensureIsNotRateLimited();
         }
 
         $credentials = [
@@ -124,10 +122,10 @@ class LoginRequest extends FormRequest
         ];
 
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey(), self::UNKNOWN_DECAY_SECONDS);
+
             if ($user) {
                 $lockouts->recordFailure($user);
-            } else {
-                RateLimiter::hit($this->throttleKey(), self::UNKNOWN_DECAY_SECONDS);
             }
 
             throw ValidationException::withMessages([
@@ -206,13 +204,16 @@ class LoginRequest extends FormRequest
             return null;
         }
 
+        // Always bind user input as query parameters — never interpolate into SQL strings.
         if (str_contains($contact, '@')) {
-            return User::query()->whereRaw('LOWER(email) = ?', [Str::lower($contact)])->first();
+            return User::query()
+                ->whereRaw('LOWER(email) = ?', [Str::lower($contact)])
+                ->first();
         }
 
         $digits = preg_replace('/\D+/', '', $contact) ?? '';
 
-        if ($digits === '') {
+        if ($digits === '' || strlen($digits) < 6 || strlen($digits) > 15) {
             return null;
         }
 

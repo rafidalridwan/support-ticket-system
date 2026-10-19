@@ -26,10 +26,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('login', function (Request $request) {
-            $email = (string) $request->input('email');
-            $key = strtolower($email).'|'.$request->ip();
+            $email = strtolower((string) $request->input('email'));
 
-            return Limit::perMinute(5)->by($key);
+            return [
+                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
         });
 
         Vite::prefetch(concurrency: 3);

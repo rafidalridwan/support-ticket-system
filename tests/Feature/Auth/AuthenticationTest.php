@@ -41,6 +41,40 @@ describe('Authentication', function () {
         $this->assertGuest();
     });
 
+    it('rate limits repeated login attempts', function () {
+        $payload = [
+            'email' => 'attacker@example.com',
+            'password' => 'wrong-password',
+        ];
+
+        foreach (range(1, 5) as $attempt) {
+            $this->from(route('login'))
+                ->post('/login', $payload)
+                ->assertRedirect(route('login'));
+        }
+
+        $this->from(route('login'))
+            ->post('/login', $payload)
+            ->assertStatus(429);
+    });
+
+    it('rejects sql injection payloads in the login identifier safely', function () {
+        createSystemAdmin([
+            'email' => 'admin@example.com',
+            'password' => 'password',
+        ]);
+
+        $this->from(route('login'))
+            ->post('/login', [
+                'email' => "admin@example.com' OR '1'='1",
+                'password' => 'password',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    });
+
     it('rejects inactive accounts', function () {
         $this->seed(RolePermissionSeeder::class);
 

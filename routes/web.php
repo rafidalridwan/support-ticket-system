@@ -16,7 +16,9 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/administrative/dashboard');
 
 Route::get('login', [AuthController::class, 'create'])->name('login');
-Route::post('login', [AuthController::class, 'store']);
+Route::post('login', [AuthController::class, 'store'])
+    ->middleware('throttle:login')
+    ->name('login.store');
 
 Route::middleware('auth')->prefix('administrative')->name('administrative.')->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
