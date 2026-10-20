@@ -4,22 +4,15 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { router, usePage } from "@inertiajs/react";
-import { Bell, ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useAdminT } from "../../contexts/AdminI18nContext";
 import { ADMIN_CHROME_BORDER, ADMIN_CHROME_TEXT, ADMIN_CHROME_TEXT_MUTED } from "../../theme/adminColors";
 import ConfirmDialog from "../reusable/ConfirmDialog";
-
-// Static/mock placeholders — no notifications backend is wired up yet.
-const MOCK_NOTIFICATIONS = [
-    { id: 1, text: "Welcome to the admin panel", time: "just now" },
-    { id: 2, text: "Review roles and permissions for your team", time: "1 hour ago" },
-];
+import NotificationBell from "./NotificationBell";
 
 const MenuButton = ({ onClick }) => {
     return (
@@ -77,43 +70,7 @@ const Navbar = ({ title, onToggle }) => {
 
                     <div className="ml-auto flex shrink-0 items-center gap-2">
                         <ThemeToggle />
-
-                        {/* Notification bell — mock/static list, no backend wired yet */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button
-                                    type="button"
-                                    className="relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--admin-surface-muted)]"
-                                    style={{ color: ADMIN_CHROME_TEXT }}
-                                >
-                                    <Bell className="h-[18px] w-[18px]" />
-                                    {MOCK_NOTIFICATIONS.length > 0 && (
-                                        <span
-                                            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
-                                            style={{ background: "var(--admin-red)" }}
-                                        >
-                                            {MOCK_NOTIFICATIONS.length}
-                                        </span>
-                                    )}
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-1.5rem)]">
-                                <DropdownMenuLabel>{t("notificationDropdown.headerTitle")}</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {MOCK_NOTIFICATIONS.length === 0 ? (
-                                    <div className="px-2.5 py-3 text-sm text-muted-foreground">
-                                        {t("notificationDropdown.empty")}
-                                    </div>
-                                ) : (
-                                    MOCK_NOTIFICATIONS.map((item) => (
-                                        <DropdownMenuItem key={item.id} className="flex-col items-start gap-0.5">
-                                            <span className="text-sm text-foreground">{item.text}</span>
-                                            <span className="text-xs text-muted-foreground">{item.time}</span>
-                                        </DropdownMenuItem>
-                                    ))
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <NotificationBell />
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

@@ -3,22 +3,32 @@
 use App\Http\Controllers\Administrative\AuthController;
 use App\Http\Controllers\Administrative\BusinessHourDayController;
 use App\Http\Controllers\Administrative\HomeController;
+use App\Http\Controllers\Administrative\NotificationController;
 use App\Http\Controllers\Administrative\PermissionController;
 use App\Http\Controllers\Administrative\RoleController;
 use App\Http\Controllers\Administrative\SlaPolicyController;
 use App\Http\Controllers\Administrative\TicketCategoryController;
 use App\Http\Controllers\Administrative\TicketStatusController;
+use App\Http\Controllers\Administrative\TicketController;
 use App\Http\Controllers\Administrative\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/administrative/dashboard');
 
 Route::get('login', [AuthController::class, 'create'])->name('login');
-Route::post('login', [AuthController::class, 'store']);
+Route::post('login', [AuthController::class, 'store'])
+    ->middleware('throttle:login')
+    ->name('login.store');
 
 Route::middleware('auth')->prefix('administrative')->name('administrative.')->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     Route::get('logout', [AuthController::class, 'destroy'])->name('logout');
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+    });
 
     Route::resource('/permission', PermissionController::class)->except(['show', 'create', 'edit']);
     Route::resource('/role', RoleController::class)->except(['show', 'create', 'edit']);
@@ -39,13 +49,28 @@ Route::middleware('auth')->prefix('administrative')->name('administrative.')->gr
         Route::delete('/{slaPolicy}', [SlaPolicyController::class, 'destroy'])->name('destroy');
     });
 
-    Route::resource('ticket-status', TicketStatusController::class)
-        ->except(['show', 'create', 'edit'])
-        ->parameters(['ticket-status' => 'ticketStatus']);
+    Route::prefix('ticket-status')->name('ticket-status.')->group(function () {
+        Route::get('/', [TicketStatusController::class, 'index'])->name('index');
+        Route::post('/', [TicketStatusController::class, 'store'])->name('store');
+        Route::put('/{ticketStatus}', [TicketStatusController::class, 'update'])->name('update');
+        Route::delete('/{ticketStatus}', [TicketStatusController::class, 'destroy'])->name('destroy');
+    });
 
-    Route::resource('ticket-category', TicketCategoryController::class)
-        ->except(['show', 'create', 'edit'])
-        ->parameters(['ticket-category' => 'ticketCategory']);
+    Route::prefix('ticket-category')->name('ticket-category.')->group(function () {
+        Route::get('/', [TicketCategoryController::class, 'index'])->name('index');
+        Route::post('/', [TicketCategoryController::class, 'store'])->name('store');
+        Route::put('/{ticketCategory}', [TicketCategoryController::class, 'update'])->name('update');
+        Route::delete('/{ticketCategory}', [TicketCategoryController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('ticket')->name('ticket.')->group(function () {
+        Route::get('/', [TicketController::class, 'index'])->name('index');
+        Route::post('/', [TicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
+        Route::post('/{ticket}/assign', [TicketController::class, 'assign'])->name('assign');
+        Route::post('/{ticket}/status', [TicketController::class, 'updateStatus'])->name('status');
+    });
 
     Route::prefix('business-hour')->name('business-hour.')->group(function () {
         Route::get('/', [BusinessHourDayController::class, 'edit'])->name('edit');

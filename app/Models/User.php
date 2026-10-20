@@ -51,7 +51,7 @@ class User extends Authenticatable
         return $this->status === self::STATUS_ACTIVE;
     }
 
-    public function isSystemAdmin(): bool
+    public function isAdministrator(): bool
     {
         return $this->hasRole('administrator') || $this->hasRole('system_admin');
     }

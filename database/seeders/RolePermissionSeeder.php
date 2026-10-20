@@ -13,6 +13,7 @@ class RolePermissionSeeder extends Seeder
         $roles = [
             'administrator' => 'Administrator',
             'user' => 'User',
+            'support_agent' => 'Support Agent',
         ];
 
         foreach ($roles as $name => $label) {
@@ -57,6 +58,9 @@ class RolePermissionSeeder extends Seeder
             ['ticket_category_create', 'Ticket Category Management'],
             ['ticket_category_edit', 'Ticket Category Management'],
             ['ticket_category_delete', 'Ticket Category Management'],
+
+            ['ticket_list', 'Ticket Management'],
+            ['ticket_create', 'Ticket Management'],
         ];
 
         foreach ($permissions as [$name, $label]) {
@@ -68,5 +72,11 @@ class RolePermissionSeeder extends Seeder
 
         Role::findByName('administrator', 'web')
             ->syncPermissions(Permission::all());
+
+        Role::findByName('user', 'web')
+            ->syncPermissions(['ticket_list', 'ticket_create']);
+
+        Role::findByName('support_agent', 'web')
+            ->syncPermissions(['ticket_list']);
     }
 }

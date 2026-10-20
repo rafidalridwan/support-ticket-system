@@ -1,9 +1,10 @@
-import { Head, useForm, usePage } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 import AppLayout from "../../../components/layouts/AppLayout";
 import { createPermissionChecker } from "../../../helpers/adminPermissions";
+import { DEFAULT_PER_PAGE, resolvePagination } from "../../../helpers/pagination";
 import ConfirmDialog from "@/components/reusable/ConfirmDialog";
 import FormField from "@/components/reusable/FormField";
 import { Button } from "@/components/ui/button";
@@ -17,13 +18,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DataPagination } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const emptyStatus = { name: "", value: "", is_close: false };
 
+function toStatusValue(name) {
+    return String(name || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_");
+}
+
 export default function Index() {
-    const { statuses = [], auth } = usePage().props;
+    const { statuses, auth, pagination } = usePage().props;
     const can = createPermissionChecker(auth);
+    const { options } = resolvePagination(pagination);
+    const statusRows = statuses?.data || [];
+    const [currentPage, setCurrentPage] = useState(statuses?.current_page || 1);
+    const [pageSize, setPageSize] = useState(statuses?.per_page || DEFAULT_PER_PAGE);
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [deleting, setDeleting] = useState(null);
@@ -89,7 +104,14 @@ export default function Index() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {statuses.map((status) => (
+                        {statusRows.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                    No ticket statuses found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {statusRows.map((status) => (
                             <TableRow key={status.id}>
                                 <TableCell className="font-medium">{status.name}</TableCell>
                                 <TableCell>{status.value}</TableCell>
@@ -115,6 +137,28 @@ export default function Index() {
                         ))}
                     </TableBody>
                 </Table>
+                <DataPagination
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    total={statuses?.total || 0}
+                    pageSizeOptions={options}
+                    className="border-0 bg-transparent px-0"
+                    onPageChange={(page) => {
+                        setCurrentPage(page);
+                        router.get(route("administrative.ticket-status.index"), {
+                            page,
+                            per_page: pageSize,
+                        }, { preserveState: true, preserveScroll: true, replace: true });
+                    }}
+                    onPageSizeChange={(size) => {
+                        setPageSize(size);
+                        setCurrentPage(1);
+                        router.get(route("administrative.ticket-status.index"), {
+                            page: 1,
+                            per_page: size,
+                        }, { preserveState: true, preserveScroll: true, replace: true });
+                    }}
+                />
             </div>
 
             <Dialog open={open} onOpenChange={setOpen}>
@@ -125,10 +169,36 @@ export default function Index() {
                     <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
                         <DialogBody className="space-y-4">
                             <FormField label="Name" required error={form.errors.name}>
-                                <Input value={form.data.name} onChange={(e) => form.setData("name", e.target.value)} />
+                                <Input
+                                    value={form.data.name}
+                                    placeholder="e.g. In Progress"
+                                    onChange={(e) => {
+                                        const name = e.target.value;
+                                        if (editing) {
+                                            form.setData("name", name);
+                                            return;
+                                        }
+                                        form.setData({
+                                            ...form.data,
+                                            name,
+                                            value: toStatusValue(name),
+                                        });
+                                    }}
+                                />
                             </FormField>
-                            <FormField label="Value" required error={form.errors.value}>
-                                <Input value={form.data.value} onChange={(e) => form.setData("value", e.target.value)} />
+                            <FormField
+                                label="Value"
+                                required
+                                error={form.errors.value}
+                                hint={!editing ? "Auto-generated from name" : undefined}
+                            >
+                                <Input
+                                    value={form.data.value}
+                                    readOnly={!editing}
+                                    className={!editing ? "bg-[var(--admin-surface-muted)]" : undefined}
+                                    onChange={(e) => editing && form.setData("value", e.target.value)}
+                                    placeholder="in_progress"
+                                />
                             </FormField>
                             <label className="flex items-center gap-2 text-sm">
                                 <Checkbox
